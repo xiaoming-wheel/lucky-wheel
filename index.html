@@ -571,3 +571,59 @@ soundBtn.addEventListener('click', () => {
 </body>
   html
 </html>
+<script>
+(function () {
+  var bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:99999;display:flex;gap:8px;';
+  var ex = document.createElement('button');
+  ex.textContent = '⬇️ 备份';
+  var im = document.createElement('button');
+  im.textContent = '⬆️ 恢复';
+  var style = 'padding:8px 14px;font-size:14px;border:none;border-radius:20px;background:rgba(0,0,0,.55);color:#fff;';
+  ex.style.cssText = style; im.style.cssText = style;
+  bar.appendChild(ex); bar.appendChild(im);
+  document.body.appendChild(bar);
+
+  // 导出：把本站全部本地数据打包成一个 JSON 文件
+  ex.onclick = function () {
+    var data = {};
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      data[k] = localStorage.getItem(k);
+    }
+    var d = new Date();
+    var name = 'lucky-wheel-backup-' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '.json';
+    var file = new File([JSON.stringify(data)], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file] });   // iPhone：弹出分享面板，选"存储到文件"
+    } else {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+      a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  };
+
+  // 恢复：选择之前导出的备份文件，写回本机
+  im.onclick = function () {
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json,application/json';
+    input.onchange = function () {
+      var f = input.files[0]; if (!f) return;
+      var r = new FileReader();
+      r.onload = function () {
+        try {
+          var data = JSON.parse(r.result);
+          for (var k in data) localStorage.setItem(k, data[k]);
+          alert('恢复成功！页面即将刷新');
+          location.reload();
+        } catch (e) {
+          alert('文件不对或已损坏，请选择之前导出的备份文件');
+        }
+      };
+      r.readAsText(f);
+    };
+    input.click();
+  };
+})();
+</script>
